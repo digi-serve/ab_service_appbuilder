@@ -3,7 +3,16 @@ const FilterComplex = require("../AppBuilder/platform/FilterComplex");
 function isDataValid(AB, scope, currentObject, data) {
    const filter_helper = new FilterComplex(null, AB);
    filter_helper.fieldsLoad(currentObject.fields(), currentObject);
-   filter_helper.setValue(scope?.Filters);
+   // We only need to add the rule related to the currentObject
+   const scopeRules = [];
+   if (scope.Filters && scope.Filters.rules) {
+      (scope.Filters.rules || []).forEach((r) => {
+         if (currentObject.fieldIDs.indexOf(r.key) > -1) {
+            scopeRules.push(r);
+         }
+      });
+   }
+   filter_helper.setValue({ glue: "and", rules: scopeRules });
 
    return (
       (scope.objectIds ?? []).filter((objId) => objId == currentObject.id)
