@@ -36,7 +36,7 @@ jobs:
      
       - name: Run Cypress Tests
         run: npm run test:e2e:app -- --browser chrome
-        working-directory: ./ab
+        working-directory: ./AppBuilder
      
       - name: Save Screenshots 
         uses: actions/upload-artifact@v2
