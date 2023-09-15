@@ -179,6 +179,8 @@ let getSQL = (AB, { hasHeader, dc, obj, userData, extraWhere }, req) => {
 
    return (
       Promise.resolve()
+         // update the .where condition to have user's scope conditions
+         .then(() => obj.includeScopes(options, userData, req))
          // update the .where condition to be ready for the SQL
          .then(() => obj.reduceConditions(options.where, userData, req))
          // Write SQL command

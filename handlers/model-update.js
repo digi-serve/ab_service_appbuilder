@@ -10,6 +10,9 @@ const Errors = require("../utils/Errors");
 const RetryFind = require("../utils/RetryFind");
 const UpdateConnectedFields = require("../utils/broadcastUpdateConnectedFields.js");
 const { prepareBroadcast } = require("../utils/broadcast.js");
+const {
+   registerProcessTrigger,
+} = require("../utils/processTrigger/manager.js");
 
 const { ref /*, raw  */ } = require("objection");
 
@@ -32,6 +35,7 @@ module.exports = {
       objectID: { string: { uuid: true }, required: true },
       ID: { string: { uuid: true }, required: true },
       values: { object: true, required: true },
+      fromProcessManager: { boolean: true, optional: true },
       // uuid: { string: { uuid: true }, required: true }
    },
 
@@ -61,6 +65,7 @@ module.exports = {
 
             var id = req.param("ID");
             var values = req.param("values");
+            const fromProcessManager = req.param("fromProcessManager");
 
             // Special Case:  SiteUser
             // Remove any special fields if they don't have values set.
@@ -72,7 +77,7 @@ module.exports = {
                });
             }
 
-            var oldItem = null;
+            // var oldItem = null;
             var newRow = null;
             const packets = [];
             async.series(
@@ -105,49 +110,51 @@ module.exports = {
                      }
                   },
 
-                  // 1) pull the old Item so we can compare updated connected
-                  // entries that need to be updated.
-                  findOld: (done) => {
-                     req.performance.mark("find.old");
-                     // RetryFind(
-                     //    object,
-                     //    {
-                     //       where: {
-                     //          glue: "and",
-                     //          rules: [
-                     //             {
-                     //                key: object.PK(),
-                     //                rule: "equals",
-                     //                value: id,
-                     //             },
-                     //          ],
-                     //       },
-                     //       populate: true,
-                     //    },
-                     //    condDefaults,
-                     //    req
-                     // )
-                     req.retry(() =>
-                        object
-                           .model()
-                           .find({ where: { uuid: id }, populate: true }, req)
-                     )
-                        .then((result) => {
-                           req.performance.measure("find.old");
-                           oldItem = result;
-                           done();
-                        })
-                        .catch((err) => {
-                           req.notify.developer(err, {
-                              context:
-                                 "Service:appbuilder.model-update: finding old entry:",
-                              req,
-                              id,
-                              // condDefaults,
-                           });
-                           done(err);
-                        });
-                  },
+                  // NOTE: oldItem was used when we sent out 'stale' updates.  But we no
+                  // longer perform that.  So, taking this out:
+                  //
+                  // // 1) pull the old Item so we can compare updated connected
+                  // // entries that need to be updated.
+                  // findOld: (done) => {
+                  //    req.performance.mark("find.old");
+                  //    // RetryFind(
+                  //    //    object,
+                  //    //    {
+                  //    //       where: {
+                  //    //          glue: "and",
+                  //    //          rules: [
+                  //    //             {
+                  //    //                key: object.PK(),
+                  //    //                rule: "equals",
+                  //    //                value: id,
+                  //    //             },
+                  //    //          ],
+                  //    //       },
+                  //    //       populate: true,
+                  //    //    },
+                  //    //    condDefaults,
+                  //    //    req
+                  //    // )
+                  //    req.retry(() =>
+                  //       object
+                  //          .model()
+                  //          .find({ where: { uuid: id }, populate: true }, req)
+                  //    )
+                  //       .then((result) => {
+                  //          req.performance.measure("find.old");
+                  //          oldItem = result;
+                  //          done();
+                  //       })
+                  //       .catch((err) => {
+                  //          req.notify.developer(err, {
+                  //             context:
+                  //                "Service:appbuilder.model-update: finding old entry:",
+                  //             id,
+                  //             // condDefaults,
+                  //          });
+                  //          done(err);
+                  //       });
+                  // },
 
                   // 2) Perform the Initial Update of the data
                   update: (done) => {
@@ -232,6 +239,7 @@ module.exports = {
                                  "log_manager.rowlog-create",
                                  {
                                     username: condDefaults.username,
+                                    usernameReal: req.usernameReal(),
                                     record: values,
                                     level: "update",
                                     row: id,
@@ -242,17 +250,28 @@ module.exports = {
                                  }
                               );
                            },
-                           trigger: (next) => {
-                              req.serviceRequest(
-                                 "process_manager.trigger",
-                                 {
+                           trigger: async () => {
+                              if (fromProcessManager) return;
+                              try {
+                                 const pureData = (
+                                    await object.model().find(
+                                       {
+                                          where: { uuid: id },
+                                          populate: true,
+                                          disableMinifyRelation: true,
+                                       },
+                                       req
+                                    )
+                                 )[0];
+
+                                 await registerProcessTrigger(req, {
                                     key: `${object.id}.updated`,
-                                    data: newRow,
-                                 },
-                                 (err) => {
-                                    next(err);
-                                 }
-                              );
+                                    data: pureData,
+                                 });
+                                 return;
+                              } catch (err) {
+                                 return err;
+                              }
                            },
                            // NOTE: in v2, we are replacing "stale" notifications
                            // with "update" notifications in order to reduce the
@@ -291,12 +310,17 @@ module.exports = {
                                  newRow,
                               });
                            }
-                           req.performance.log([
+
+                           const message = [
                               "broadcast",
                               "log_manager.rowlog-create",
-                              "process_manager.trigger",
                               // "stale.update",
-                           ]);
+                           ];
+
+                           if (!fromProcessManager)
+                              message.push("process_manager.trigger");
+
+                           req.performance.log(message);
                            done(err);
                         }
                      );
@@ -317,7 +341,6 @@ module.exports = {
             req.notify.developer(err, {
                context:
                   "Service:appbuilder.model-update: Error initializing ABFactory",
-               req,
             });
             cb(err);
          });

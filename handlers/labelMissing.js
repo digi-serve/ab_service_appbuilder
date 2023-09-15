@@ -57,6 +57,16 @@ module.exports = {
     */
    fn: function handler(req, cb) {
       //
+      req.log("appbuilder.labelMissing");
+
+      // verify we have enabled the ability to update labels.
+      let config = req.config();
+      if (!config.labelUpdates) {
+         // if not, simply log the attempt and act as if everything was fine.
+         req.log("appbuilder.labelMissing -> labelUpdates not enabled.");
+         cb(null, { status: "success" });
+         return;
+      }
 
       // Get the passed in parameters
       var labelsToTranslate = req.param("labels");

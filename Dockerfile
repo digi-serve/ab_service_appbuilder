@@ -25,4 +25,4 @@ RUN npm i -f
 
 WORKDIR /app
 
-CMD [ "node", "--inspect=0.0.0.0:9229", "app.js" ]
+CMD [ "node", "--inspect=0.0.0.0:9229", "--max-old-space-size=8192", "--stack-size=8192", "app.js" ]

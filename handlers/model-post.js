@@ -8,6 +8,9 @@ const cleanReturnData = require("../AppBuilder/utils/cleanReturnData");
 const Errors = require("../utils/Errors");
 const UpdateConnectedFields = require("../utils/broadcastUpdateConnectedFields.js");
 const { prepareBroadcast } = require("../utils/broadcast.js");
+const {
+   registerProcessTrigger,
+} = require("../utils/processTrigger/manager.js");
 
 module.exports = {
    /**
@@ -22,6 +25,7 @@ module.exports = {
    inputValidation: {
       objectID: { string: { uuid: true }, required: true },
       values: { object: true, required: true },
+      disableStale: { boolean: true, optional: true },
       // uuid: {
       //    required: true,
       //    validation: { type: "uuid" }
@@ -116,7 +120,6 @@ module.exports = {
                            req.notify.developer(err, {
                               context:
                                  "Service:appbuilder.model-post: Error creating entry",
-                              req,
                               values,
                               condDefaults,
                            });
@@ -189,6 +192,7 @@ module.exports = {
                                  "log_manager.rowlog-create",
                                  {
                                     username: condDefaults.username,
+                                    usernameReal: req.usernameReal(),
                                     record: newRow,
                                     level: "insert",
                                     row: newRow.uuid,
@@ -199,17 +203,27 @@ module.exports = {
                                  }
                               );
                            },
-                           trigger: (next) => {
-                              req.serviceRequest(
-                                 "process_manager.trigger",
-                                 {
+                           trigger: async () => {
+                              try {
+                                 const pureData = (
+                                    await object.model().find(
+                                       {
+                                          where: { uuid: newRow.uuid },
+                                          populate: true,
+                                          disableMinifyRelation: true,
+                                       },
+                                       req
+                                    )
+                                 )[0];
+
+                                 await registerProcessTrigger(req, {
                                     key: `${object.id}.added`,
-                                    data: newRow,
-                                 },
-                                 (err) => {
-                                    next(err);
-                                 }
-                              );
+                                    data: pureData,
+                                 });
+                                 return;
+                              } catch (err) {
+                                 return err;
+                              }
                            },
 
                            // Alert our Clients of changed data:
@@ -217,6 +231,9 @@ module.exports = {
                            // object values.  This will make sure those entries are pushed up
                            // to the web clients.
                            staleUpates: (next) => {
+                              const isStaleDisabled = req.param("disableStale");
+                              if (isStaleDisabled) return next();
+
                               req.performance.mark("stale.update");
                               UpdateConnectedFields(
                                  AB,
@@ -273,9 +290,9 @@ module.exports = {
             req.notify.developer(err, {
                context:
                   "Service:appbuilder.model-post: Error initializing ABFactory",
-               req,
             });
             cb(Errors.repackageError(err));
          });
    },
 };
+

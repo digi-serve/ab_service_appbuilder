@@ -14,25 +14,43 @@ function isDataValid(AB, scope, currentObject, data) {
    }
    filter_helper.setValue({ glue: "and", rules: scopeRules });
 
-   return (
+   if (scope.objectIds?.split) {
+      scope.objectIds = scope.objectIds.split(",");
+   }
+   // do not simply return the condition because undefined is not a valid response
+   // and some filter rules do not have a length ex: NULL or {glue:"and"}
+   // instead return true or false based on condition pass or fail
+   if (
       (scope.objectIds ?? []).filter((objId) => objId == currentObject.id)
          .length &&
       scope.Filters?.rules?.length &&
       filter_helper.isValid(data)
-   );
+   ) {
+      return true;
+   } else {
+      return false;
+   }
 }
 
 /**
  * @function getRightRoles()
  * @param {ABFactory} AB
- *			 the current ABFactory for the data in this tenant's request.
+ *        the current ABFactory for the data in this tenant's request.
  * @param {ABObject} currentObject
- *			 the base ABObject this data is representing.
+ *        the base ABObject this data is representing.
  * @param {Object} data
  * @return {Promise}
  */
 module.exports = async function (AB, currentObject, data) {
    let roles = [];
+   // Check if working with SITE_SCOPE or SITE_ROLE object
+   if (
+      currentObject.id == AB.objectScope().id ||
+      currentObject.id == AB.objectRole().id
+   ) {
+      roles = AB.defaultSystemRoles();
+      return roles;
+   }
    const scopes = await AB.objectScope()
       .model()
       .find({

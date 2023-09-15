@@ -7,6 +7,9 @@ const ABBootstrap = require("../AppBuilder/ABBootstrap");
 const cleanReturnData = require("../AppBuilder/utils/cleanReturnData");
 const Errors = require("../utils/Errors");
 // const RetryFind = require("../utils/RetryFind.js");
+const {
+   registerProcessTrigger,
+} = require("../utils/processTrigger/manager.js");
 const UpdateConnectedFields = require("../utils/broadcastUpdateConnectedFields.js");
 const { prepareBroadcast } = require("../utils/broadcast.js");
 
@@ -67,6 +70,7 @@ module.exports = {
             var id = req.param("ID");
 
             var oldItem = null;
+            let pureData = null;
             // {valueHash}
             // the current value of the row we are deleting
 
@@ -88,6 +92,7 @@ module.exports = {
                                  uuid: id,
                               },
                               populate: true,
+                              disableMinifyRelation: true,
                            },
                            // condDefaults, // <-- .find() doesn't take
                            req
@@ -95,6 +100,7 @@ module.exports = {
                      )
                         .then((old) => {
                            oldItem = old ? old[0] : null;
+                           pureData = AB.cloneDeep(oldItem);
                            req.performance.measure("find.old");
                            return cleanReturnData(AB, object, [oldItem]).then(
                               () => {
@@ -185,6 +191,7 @@ module.exports = {
                                  "log_manager.rowlog-create",
                                  {
                                     username: condDefaults.username,
+                                    usernameReal: req.usernameReal(),
                                     record: oldItem,
                                     level: "delete",
                                     row: id,
@@ -196,20 +203,19 @@ module.exports = {
                               );
                            },
                            // update our Process.trigger events
-                           processTrigger: (next) => {
-                              if (!oldItem) {
-                                 return next();
+                           processTrigger: async () => {
+                              if (!pureData) {
+                                 return;
                               }
-                              req.serviceRequest(
-                                 "process_manager.trigger",
-                                 {
+                              try {
+                                 await registerProcessTrigger(req, {
                                     key: `${object.id}.deleted`,
-                                    data: oldItem,
-                                 },
-                                 (err) => {
-                                    next(err);
-                                 }
-                              );
+                                    data: pureData,
+                                 });
+                                 return;
+                              } catch (err) {
+                                 return err;
+                              }
                            },
                            // Alert our Clients of changed data:
                            staleUpates: (next) => {
@@ -273,7 +279,6 @@ module.exports = {
             req.notify.developer(err, {
                context:
                   "Service:appbuilder.model-delete: Error initializing ABFactory",
-               req,
             });
             cb(err);
          });

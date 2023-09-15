@@ -7,9 +7,11 @@ async function prepareBroadcast({ AB, req, object, data, dataId, event }) {
       const roomKey = `${object.id}-${role.uuid}`;
       rooms.push(req.socketKey(roomKey));
    });
-   // Also broadcast to the req user (need to figure how to handle updates when
-   // using current_user filter in scopes)
-   rooms.push(req.socketKey(`${object.id}-${req._user.username}`));
+   if (req._user) {
+      // Also broadcast to the req user (need to figure how to handle updates when
+      // using current_user filter in scopes)
+      rooms.push(req.socketKey(`${object.id}-${req._user.username}`));
+   }
    return {
       room: rooms,
       event,
