@@ -94,17 +94,26 @@ module.exports = {
       // get the AB for the current tenant
       ABBootstrap.init(req)
          .then((AB) => {
-            var id = req.param("objectID");
+            const id = req.param("objectID");
+            const cond = req.param("cond");
             var object = AB.objectByID(id);
             if (!object) {
                object = AB.queryByID(id);
+            }
+            // If .isAPI and .url are set, then pull and return data to client
+            if (!object && cond.isAPI && cond.url) {
+               object = AB.objectNew({
+                  id: "MOCK_API_OBJECT",
+                  isAPI: true,
+                  request: {
+                     url: cond.url,
+                  },
+               });
             }
             if (!object) {
                return Errors.missingObject(id, req, cb);
             }
             req.log(`ABObject: ${object.label || object.name}`);
-
-            var cond = req.param("cond");
 
             var condDefaults = {
                languageCode: req.languageCode(),
