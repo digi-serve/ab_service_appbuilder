@@ -13,6 +13,7 @@ const { prepareBroadcast } = require("../utils/broadcast.js");
 const {
    registerProcessTrigger,
 } = require("../utils/processTrigger/manager.js");
+const { clearCache } = require("../utils/cacheManager.js");
 
 const { ref /*, raw  */ } = require("objection");
 
@@ -273,6 +274,11 @@ module.exports = {
                                  return err;
                               }
                            },
+
+                           clearCache: async () => {
+                              await clearCache(AB, req, object.id, id);
+                           },
+
                            // NOTE: in v2, we are replacing "stale" notifications
                            // with "update" notifications in order to reduce the
                            // load on the server.

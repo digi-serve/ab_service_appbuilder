@@ -12,6 +12,7 @@ const {
 } = require("../utils/processTrigger/manager.js");
 const UpdateConnectedFields = require("../utils/broadcastUpdateConnectedFields.js");
 const { prepareBroadcast } = require("../utils/broadcast.js");
+const { clearCache } = require("../utils/cacheManager.js");
 
 module.exports = {
    /**
@@ -217,6 +218,11 @@ module.exports = {
                                  return err;
                               }
                            },
+
+                           clearCache: async () => {
+                              await clearCache(AB, req, object.id, id);
+                           },
+
                            // Alert our Clients of changed data:
                            staleUpates: (next) => {
                               if (!oldItem) {
