@@ -11,6 +11,7 @@ const { prepareBroadcast } = require("../utils/broadcast.js");
 const {
    registerProcessTrigger,
 } = require("../utils/processTrigger/manager.js");
+const { clearCache } = require("../utils/cacheManager.js");
 
 module.exports = {
    /**
@@ -226,6 +227,10 @@ module.exports = {
                               }
                            },
 
+                           clearCache: async () => {
+                              await clearCache(AB, req, object.id, id);
+                           },
+
                            // Alert our Clients of changed data:
                            // A newly created entry, might update the connected data in other
                            // object values.  This will make sure those entries are pushed up
@@ -295,4 +300,3 @@ module.exports = {
          });
    },
 };
-
