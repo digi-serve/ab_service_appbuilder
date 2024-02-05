@@ -178,30 +178,30 @@ module.exports = {
                            done(err);
                         });
                   },
-                  perpareBroadcast: (next) => {
-                     req.performance.mark("prepare broadcast");
-                     prepareBroadcast({
-                        AB,
-                        req,
-                        object,
-                        data: newRow,
-                        event: "ab.datacollection.update",
-                     })
-                        .then((packet) => {
-                           packets.push(packet);
-                           req.performance.measure("prepare broadcast");
-                           next();
-                        })
-                        .catch((err) => next(err));
-                  },
-                  // broadcast our .update to all connected web clients
-                  broadcast: (next) => {
-                     req.performance.mark("broadcast");
-                     req.broadcast(packets, (err) => {
-                        req.performance.measure("broadcast");
-                        next(err);
-                     });
-                  },
+                  // perpareBroadcast: (next) => {
+                  //    req.performance.mark("prepare broadcast");
+                  //    prepareBroadcast({
+                  //       AB,
+                  //       req,
+                  //       object,
+                  //       data: newRow,
+                  //       event: "ab.datacollection.update",
+                  //    })
+                  //       .then((packet) => {
+                  //          packets.push(packet);
+                  //          req.performance.measure("prepare broadcast");
+                  //          next();
+                  //       })
+                  //       .catch((err) => next(err));
+                  // },
+                  // // broadcast our .update to all connected web clients
+                  // broadcast: (next) => {
+                  //    req.performance.mark("broadcast");
+                  //    req.broadcast(packets, (err) => {
+                  //       req.performance.measure("broadcast");
+                  //       next(err);
+                  //    });
+                  // },
 
                   serviceResponse: (done) => {
                      // So let's end the service call here, then proceed
@@ -318,7 +318,7 @@ module.exports = {
                            }
 
                            const message = [
-                              "broadcast",
+                              // "broadcast",
                               "log_manager.rowlog-create",
                               // "stale.update",
                            ];

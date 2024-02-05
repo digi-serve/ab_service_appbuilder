@@ -129,31 +129,31 @@ module.exports = {
                            done(err);
                         });
                   },
-                  perpareBroadcast: (done) => {
-                     req.performance.mark("prepare broadcast");
-                     prepareBroadcast({
-                        AB,
-                        req,
-                        object,
-                        data: newRow,
-                        event: "ab.datacollection.create",
-                     })
-                        .then((packet) => {
-                           packets.push(packet);
-                           req.performance.measure("prepare broadcast");
-                           done();
-                        })
-                        .catch((err) => done(err));
-                  },
+                  // perpareBroadcast: (done) => {
+                  //    req.performance.mark("prepare broadcast");
+                  //    prepareBroadcast({
+                  //       AB,
+                  //       req,
+                  //       object,
+                  //       data: newRow,
+                  //       event: "ab.datacollection.create",
+                  //    })
+                  //       .then((packet) => {
+                  //          packets.push(packet);
+                  //          req.performance.measure("prepare broadcast");
+                  //          done();
+                  //       })
+                  //       .catch((err) => done(err));
+                  // },
 
-                  // broadcast our .create to all connected web clients
-                  broadcast: (done) => {
-                     req.performance.mark("broadcast");
-                     req.broadcast(packets, (err) => {
-                        req.performance.measure("broadcast");
-                        done(err);
-                     });
-                  },
+                  // // broadcast our .create to all connected web clients
+                  // broadcast: (done) => {
+                  //    req.performance.mark("broadcast");
+                  //    req.broadcast(packets, (err) => {
+                  //       req.performance.measure("broadcast");
+                  //       done(err);
+                  //    });
+                  // },
 
                   serviceResponse: (done) => {
                      // So let's end the service call here, then proceed
@@ -231,31 +231,31 @@ module.exports = {
                               await clearCache(AB, req, object.id, id);
                            },
 
-                           // Alert our Clients of changed data:
-                           // A newly created entry, might update the connected data in other
-                           // object values.  This will make sure those entries are pushed up
-                           // to the web clients.
-                           staleUpates: (next) => {
-                              const isStaleDisabled = req.param("disableStale");
-                              if (isStaleDisabled) return next();
+                           // // Alert our Clients of changed data:
+                           // // A newly created entry, might update the connected data in other
+                           // // object values.  This will make sure those entries are pushed up
+                           // // to the web clients.
+                           // staleUpates: (next) => {
+                           //    const isStaleDisabled = req.param("disableStale");
+                           //    if (isStaleDisabled) return next();
 
-                              req.performance.mark("stale.update");
-                              UpdateConnectedFields(
-                                 AB,
-                                 req,
-                                 object,
-                                 null,
-                                 newRow,
-                                 condDefaults
-                              )
-                                 .then(() => {
-                                    req.performance.measure("stale.update");
-                                    next();
-                                 })
-                                 .catch((err) => {
-                                    next(err);
-                                 });
-                           },
+                           //    req.performance.mark("stale.update");
+                           //    UpdateConnectedFields(
+                           //       AB,
+                           //       req,
+                           //       object,
+                           //       null,
+                           //       newRow,
+                           //       condDefaults
+                           //    )
+                           //       .then(() => {
+                           //          req.performance.measure("stale.update");
+                           //          next();
+                           //       })
+                           //       .catch((err) => {
+                           //          next(err);
+                           //       });
+                           // },
                         },
                         (err) => {
                            ////
@@ -270,10 +270,10 @@ module.exports = {
                               });
                            }
                            req.performance.log([
-                              "broadcast",
+                              // "broadcast",
                               "process_manager.trigger",
                               "log_manager.rowlog-create",
-                              "stale.update",
+                              // "stale.update",
                            ]);
                            done(err);
                         }

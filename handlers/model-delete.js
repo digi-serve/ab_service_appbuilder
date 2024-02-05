@@ -126,30 +126,30 @@ module.exports = {
                            done(err);
                         });
                   },
-                  perpareBroadcast: (next) => {
-                     req.performance.mark("prepare broadcast");
-                     prepareBroadcast({
-                        AB,
-                        req,
-                        object,
-                        dataId: id,
-                        event: "ab.datacollection.delete",
-                     })
-                        .then((packet) => {
-                           packets.push(packet);
-                           req.performance.measure("prepare broadcast");
-                           next();
-                        })
-                        .catch((err) => next(err));
-                  },
-                  // broadcast our .delete to all connected web clients
-                  broadcast: (next) => {
-                     req.performance.mark("broadcast");
-                     req.broadcast(packets, (err) => {
-                        req.performance.measure("broadcast");
-                        next(err);
-                     });
-                  },
+                  // perpareBroadcast: (next) => {
+                  //    req.performance.mark("prepare broadcast");
+                  //    prepareBroadcast({
+                  //       AB,
+                  //       req,
+                  //       object,
+                  //       dataId: id,
+                  //       event: "ab.datacollection.delete",
+                  //    })
+                  //       .then((packet) => {
+                  //          packets.push(packet);
+                  //          req.performance.measure("prepare broadcast");
+                  //          next();
+                  //       })
+                  //       .catch((err) => next(err));
+                  // },
+                  // // broadcast our .delete to all connected web clients
+                  // broadcast: (next) => {
+                  //    req.performance.mark("broadcast");
+                  //    req.broadcast(packets, (err) => {
+                  //       req.performance.measure("broadcast");
+                  //       next(err);
+                  //    });
+                  // },
 
                   serviceResponse: (done) => {
                      // So let's end the service call here, then proceed
@@ -223,28 +223,28 @@ module.exports = {
                               await clearCache(AB, req, object.id, id);
                            },
 
-                           // Alert our Clients of changed data:
-                           staleUpates: (next) => {
-                              if (!oldItem) {
-                                 return next();
-                              }
-                              req.performance.mark("stale.update");
-                              UpdateConnectedFields(
-                                 AB,
-                                 req,
-                                 object,
-                                 oldItem,
-                                 null,
-                                 condDefaults
-                              )
-                                 .then(() => {
-                                    req.performance.measure("stale.update");
-                                    next();
-                                 })
-                                 .catch((err) => {
-                                    next(err);
-                                 });
-                           },
+                           // // Alert our Clients of changed data:
+                           // staleUpates: (next) => {
+                           //    if (!oldItem) {
+                           //       return next();
+                           //    }
+                           //    req.performance.mark("stale.update");
+                           //    UpdateConnectedFields(
+                           //       AB,
+                           //       req,
+                           //       object,
+                           //       oldItem,
+                           //       null,
+                           //       condDefaults
+                           //    )
+                           //       .then(() => {
+                           //          req.performance.measure("stale.update");
+                           //          next();
+                           //       })
+                           //       .catch((err) => {
+                           //          next(err);
+                           //       });
+                           // },
                         },
                         (err) => {
                            ////
@@ -263,7 +263,7 @@ module.exports = {
                               "broadcast",
                               "process_manager.trigger",
                               "log_manager.rowlog-create",
-                              "stale.update",
+                              // "stale.update",
                            ]);
                            done(err);
                         }
