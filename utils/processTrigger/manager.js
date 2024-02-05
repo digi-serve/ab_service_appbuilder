@@ -61,17 +61,31 @@ function initCircuitBreaker(config) {
       // When 50% of requests fail, trip the circuit
       resetTimeout: config?.processTrigger?.circuit?.reset ?? 30000,
       // After 30 seconds, try again.
-      errorFilter: function (error, ...args) {
+      errorFilter: function (error, req, inputs) {
          // if we receive an error that is due to "INVALIDINPUTS",
          // update our developers then signal we can remove it.
          if (error?.code == "EINVALIDINPUTS") {
             // post an alert to our developer:
-            args[0].notify.developer(error, {
+            req.notify.developer(error, {
                context:
                   "appbuilder:utils/processTrigger/manager.js: we have called process.trigger with Invalid Inputs",
-               inputs: args[1],
+               inputs,
             });
-            // we return true so that we don't continue to make this request.
+            // try to remove this from our queue in case it already got in
+            getProcessTriggerQueue(req.tenantID(), req)
+               .then((queue) => {
+                  queue.remove(req, inputs.requestID);
+               })
+               .catch((err) =>
+                  req.notify.developer(err, {
+                     context:
+                        "appbuilder:utils/processTrigger/manager.js: error remoivng request from queue.",
+                     inputs,
+                  })
+               );
+
+            // return true so the failure doesn't affect the circuit breaker
+            // status
             return true;
          }
          return false;
@@ -117,7 +131,7 @@ function initCircuitBreaker(config) {
  * @param {string} tenant tenant uuid
  * @paran {ABRequestService} req
  * @param {number} retryInterval? optional
- * @return {ProcessTriggerQueue}
+ * @return {Promise<ProcessTriggerQueue>}
  */
 async function getProcessTriggerQueue(tenant, req, retryInterval) {
    if (!processTriggerQueueCache[tenant]) {
