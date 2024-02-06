@@ -265,6 +265,25 @@ module.exports = {
                                     )
                                  )[0];
 
+                                 // Getting some request with pureData = null
+                                 // which causes an invalid
+                                 // process_manager.trigger request. Catch that
+                                 // case here so we have more context. (The
+                                 // error will get handled later in
+                                 // utils/processTrigger/manager.js)
+                                 if (!pureData) {
+                                    req.notify.developer(
+                                       new Error(
+                                          "Unexpected response from model.find()"
+                                       ),
+                                       {
+                                          context:
+                                             "appbuilder.model-update trigger() missing data for process trigger request",
+                                          params: req.params(),
+                                       }
+                                    );
+                                 }
+
                                  await registerProcessTrigger(req, {
                                     key: `${object.id}.updated`,
                                     data: pureData,
