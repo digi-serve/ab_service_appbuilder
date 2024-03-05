@@ -59,13 +59,17 @@ module.exports = class ProcessTriggerQueue {
     * process_manager.trigger
     */
    async add(req, jobData) {
-      const uuid = jobData.requestID;
+      // NOTE: don't modify the incoming jobData since external code will
+      // try to resend it too.  Adding .user to it will invalidate some of our
+      // validation checks!
+      let cloneData = structuredClone(jobData);
+      const uuid = cloneData.requestID;
       if (this.Queue[uuid]) return; //already queued
-      let data = JSON.parse(JSON.stringify(jobData));
+      let data = structuredClone(cloneData);
       // save the req user to use on retry so that triggeredBy gets the correct user
-      jobData.user = req._user;
-      this.Queue[uuid] = { data, user: jobData.user };
-      await pendingTriggerTable.create(req, jobData);
+      cloneData.user = req._user;
+      this.Queue[uuid] = { data, user: cloneData.user };
+      await pendingTriggerTable.create(req, cloneData);
       return;
    }
 
