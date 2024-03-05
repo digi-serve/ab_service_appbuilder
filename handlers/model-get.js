@@ -153,6 +153,17 @@ module.exports = {
          req.performance?.measure("reduceConditions");
 
          req.log(`reduced where: ${JSON.stringify(cond.where)}`);
+         if (cond.where?.rules?.length > 0) {
+            // attempt to clean these rules if they contain entries
+            // that are null or {}
+            cond.where = object.whereCleanUp(cond.where);
+            if (!cond.where) {
+               // however, cond.where == null is not ok, so default to
+               // an empty condition:
+               cond.where = { glue: "and", rules: [] };
+            }
+            req.log(`clean where: ${JSON.stringify(cond.where)}`);
+         }
 
          // 4) Perform the Find Operations
          errorContext = "IN tryFind().catch() handler:";
