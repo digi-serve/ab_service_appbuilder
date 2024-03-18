@@ -15,6 +15,9 @@ async function clearCache(AB, req, objID, uuid) {
    req.serviceRequest("api_sails.site-cache-stale", {
       tenantID: req.tenantID,
    }).catch(() => {});
+   req.serviceRequest("tenant_manager.site-version-cache-stale", {
+      tenantID: req.tenantID,
+   }).catch(() => {});
    if (!uuid) return;
    const jobData = {
       tenantID: req.tenantID,
@@ -33,5 +36,8 @@ async function clearCache(AB, req, objID, uuid) {
       jobData.userUUID = "all";
    }
    req.serviceRequest("api_sails.user-cache-stale", jobData).catch(() => {});
+   req.serviceRequest("user_manager.user-version-cache-stale", jobData).catch(
+      () => {}
+   );
 }
 module.exports = { clearCache };
