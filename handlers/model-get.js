@@ -190,6 +190,15 @@ module.exports = {
          // clear any .password / .salt from SiteUser objects
          await cleanReturnData(AB, object, result.data, cond.populate);
 
+         // Register User for these updates:
+         let PK = object.PK();
+         let allIDs = result.data.map((d) => d[PK]).filter((id) => id);
+         if (allIDs.length > 0) {
+            await req.serviceRequest("api_sails.broadcast-register", {
+               ID: allIDs,
+            });
+         }
+
          cb(null, result);
       } catch (err) {
          req.notify.developer(err, {

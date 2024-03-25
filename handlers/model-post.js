@@ -129,6 +129,19 @@ module.exports = {
                            done(err);
                         });
                   },
+                  // we created a new entry, our current user should be registered to receive
+                  // updates on that entry
+                  broadcastRegister: (done) => {
+                     req.serviceRequest(
+                        "api_sails.broadcast-register",
+                        {
+                           ID: [newRow.uuid],
+                        },
+                        (err) => {
+                           done(err);
+                        }
+                     );
+                  },
                   perpareBroadcast: (done) => {
                      req.performance.mark("prepare broadcast");
                      prepareBroadcast({
