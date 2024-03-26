@@ -133,7 +133,7 @@ module.exports = {
                   // updates on that entry
                   broadcastRegister: (done) => {
                      req.serviceRequest(
-                        "api_sails.broadcast-register",
+                        "api.broadcast-register",
                         {
                            ID: [newRow.uuid],
                         },

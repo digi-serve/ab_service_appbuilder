@@ -194,7 +194,7 @@ module.exports = {
          let PK = object.PK();
          let allIDs = result.data.map((d) => d[PK]).filter((id) => id);
          if (allIDs.length > 0) {
-            await req.serviceRequest("api_sails.broadcast-register", {
+            await req.serviceRequest("api.broadcast-register", {
                ID: allIDs,
             });
          }
