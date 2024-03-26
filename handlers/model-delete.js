@@ -79,6 +79,7 @@ module.exports = {
             // {int}
             // The # of rows effected by our delete operation.
             const packets = [];
+
             async.series(
                {
                   // 1) Perform the Initial Delete of the data
@@ -224,6 +225,8 @@ module.exports = {
                            },
 
                            // Alert our Clients of changed data:
+                           // These are the changes in each of the connected items that
+                           // no longer are connected to the item that was deleted.
                            staleUpates: (next) => {
                               if (!oldItem) {
                                  return next();
