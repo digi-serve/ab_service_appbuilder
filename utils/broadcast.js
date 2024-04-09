@@ -31,6 +31,7 @@ async function prepareBroadcast({ AB, req, object, data, dataId, event }) {
       data: {
          objectId: object.id,
          data: data ?? dataId,
+         jobID: req.jobID ?? "??",
       },
    };
 }
