@@ -1,6 +1,7 @@
 // broadcastUpdateConnectedFields.js
 // var RetryFind = require("./RetryFind.js");
 const { prepareBroadcast } = require("./broadcast.js");
+const cleanReturnData = require("../AppBuilder/utils/cleanReturnData");
 
 function pullFieldsFromEntry(items, entry, relationName) {
    if (entry) {
@@ -18,6 +19,19 @@ function pullFieldsFromEntry(items, entry, relationName) {
    }
 }
 
+function safeUser(user) {
+   var safeUser = {};
+   var ignoreFields = ["password", "salt"];
+   for (var prop in user) {
+      if (Object.hasOwnProperty.call(user, prop)) {
+         if (ignoreFields.indexOf(prop) == -1) {
+            safeUser[prop] = user[prop];
+         }
+      }
+   }
+   return safeUser;
+}
+
 module.exports = function updateConnectedFields(
    AB,
    req,
@@ -33,6 +47,11 @@ module.exports = function updateConnectedFields(
    const packets = [];
    // {array}
    // this will be a compilation of all the broadcast packets to send.
+
+   var idsProcessed = [];
+   // {array}
+   // an array of the UUIDs of items we are already looking up. We will
+   // check this to make sure we are not duplicating the same entry.
 
    // Check to see if the object has any connected fields that need to be updated
    const connectFields = object.connectFields();
@@ -52,6 +71,8 @@ module.exports = function updateConnectedFields(
 
       let items = [];
 
+      let PK = field.object.PK();
+
       pullFieldsFromEntry(items, oldItem, relationName);
       pullFieldsFromEntry(items, newItem, relationName);
 
@@ -61,13 +82,15 @@ module.exports = function updateConnectedFields(
          items = [items];
       }
 
+      // don't repeat items already being processed
+      items = items.filter((i) => idsProcessed.indexOf(i[PK]) == -1);
+
       // skip if no items
       if (items.length == 0) {
          return;
       }
 
       var IDs = [];
-      var PK = field.object.PK();
 
       items.forEach((i) => {
          IDs.push(i[PK]);
@@ -75,6 +98,8 @@ module.exports = function updateConnectedFields(
 
       // filter array to only show unique items
       IDs = AB.uniq(IDs);
+
+      idsProcessed = idsProcessed.concat(IDs);
 
       // Now Perform Our Lookup to get the updated information
       lookups.push(
@@ -100,6 +125,10 @@ module.exports = function updateConnectedFields(
             )
             .then(async (data) => {
                await (data || []).forEach(async (d) => {
+                  // clear any .password / .salt from SiteUser objects
+                  // also prunes returned data just like in model-get
+                  await cleanReturnData(AB, field.object, d, true);
+
                   const packet = await prepareBroadcast({
                      AB,
                      req,
