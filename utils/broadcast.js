@@ -25,6 +25,24 @@ async function prepareBroadcast({ AB, req, object, data, dataId, event }) {
    }
    rooms.push(req.socketKey(id)); // req.socketKey() adds {tenantID}-
 
+   // NOW collect which entries to send copies of this info to:
+   let copyTo = [];
+   let connectFields = object.connectFields();
+   connectFields.forEach((f) => {
+      // NOTE: the clean and Prune utilities might remove
+      // the data[f.columnName] data.  but relationName should
+      // remain.
+      let values = data[f.relationName()];
+      if (!Array.isArray(values)) values = [values].filter((v) => v);
+
+      let lPK = f.datasourceLink.PK();
+
+      values.forEach((v) => {
+         relV = f.getRelationValue(v);
+         copyTo.push(req.socketKey(relV));
+      });
+   });
+
    return {
       room: rooms,
       event,
@@ -33,6 +51,7 @@ async function prepareBroadcast({ AB, req, object, data, dataId, event }) {
          data: data ?? dataId,
          jobID: req.jobID ?? "??",
       },
+      copyTo,
    };
 }
 module.exports = { prepareBroadcast };
