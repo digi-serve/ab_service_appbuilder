@@ -19,18 +19,18 @@ function pullFieldsFromEntry(items, entry, relationName) {
    }
 }
 
-function safeUser(user) {
-   var safeUser = {};
-   var ignoreFields = ["password", "salt"];
-   for (var prop in user) {
-      if (Object.hasOwnProperty.call(user, prop)) {
-         if (ignoreFields.indexOf(prop) == -1) {
-            safeUser[prop] = user[prop];
-         }
-      }
-   }
-   return safeUser;
-}
+// function safeUser(user) {
+//    var safeUser = {};
+//    var ignoreFields = ["password", "salt"];
+//    for (var prop in user) {
+//       if (Object.hasOwnProperty.call(user, prop)) {
+//          if (ignoreFields.indexOf(prop) == -1) {
+//             safeUser[prop] = user[prop];
+//          }
+//       }
+//    }
+//    return safeUser;
+// }
 
 module.exports = function updateConnectedFields(
    AB,
