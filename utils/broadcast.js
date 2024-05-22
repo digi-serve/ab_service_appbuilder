@@ -27,21 +27,25 @@ async function prepareBroadcast({ AB, req, object, data, dataId, event }) {
 
    // NOW collect which entries to send copies of this info to:
    let copyTo = [];
-   let connectFields = object.connectFields();
-   connectFields.forEach((f) => {
-      // NOTE: the clean and Prune utilities might remove
-      // the data[f.columnName] data.  but relationName should
-      // remain.
-      let values = data[f.relationName()];
-      if (!Array.isArray(values)) values = [values].filter((v) => v);
 
-      // let lPK = f.datasourceLink.PK();
+   // only search for additional updates if there was data provided:
+   if (data) {
+      let connectFields = object.connectFields();
+      connectFields.forEach((f) => {
+         // NOTE: the clean and Prune utilities might remove
+         // the data[f.columnName] data.  but relationName should
+         // remain.
+         let values = data[f.relationName()];
+         if (!Array.isArray(values)) values = [values].filter((v) => v);
 
-      values.forEach((v) => {
-         let relV = f.getRelationValue(v);
-         copyTo.push(req.socketKey(relV));
+         // let lPK = f.datasourceLink.PK();
+
+         values.forEach((v) => {
+            let relV = f.getRelationValue(v);
+            copyTo.push(req.socketKey(relV));
+         });
       });
-   });
+   }
 
    return {
       room: rooms,
