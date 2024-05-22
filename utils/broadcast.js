@@ -35,10 +35,10 @@ async function prepareBroadcast({ AB, req, object, data, dataId, event }) {
       let values = data[f.relationName()];
       if (!Array.isArray(values)) values = [values].filter((v) => v);
 
-      let lPK = f.datasourceLink.PK();
+      // let lPK = f.datasourceLink.PK();
 
       values.forEach((v) => {
-         relV = f.getRelationValue(v);
+         let relV = f.getRelationValue(v);
          copyTo.push(req.socketKey(relV));
       });
    });
