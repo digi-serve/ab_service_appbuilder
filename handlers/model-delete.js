@@ -224,30 +224,30 @@ module.exports = {
                               await clearCache(AB, req, object.id, id);
                            },
 
-                           // Alert our Clients of changed data:
-                           // These are the changes in each of the connected items that
-                           // no longer are connected to the item that was deleted.
-                           staleUpates: (next) => {
-                              if (!oldItem) {
-                                 return next();
-                              }
-                              req.performance.mark("stale.update");
-                              UpdateConnectedFields(
-                                 AB,
-                                 req,
-                                 object,
-                                 oldItem,
-                                 null,
-                                 condDefaults
-                              )
-                                 .then(() => {
-                                    req.performance.measure("stale.update");
-                                    next();
-                                 })
-                                 .catch((err) => {
-                                    next(err);
-                                 });
-                           },
+                           // // Alert our Clients of changed data:
+                           // // These are the changes in each of the connected items that
+                           // // no longer are connected to the item that was deleted.
+                           // staleUpates: (next) => {
+                           //    if (!oldItem) {
+                           //       return next();
+                           //    }
+                           //    req.performance.mark("stale.update");
+                           //    UpdateConnectedFields(
+                           //       AB,
+                           //       req,
+                           //       object,
+                           //       oldItem,
+                           //       null,
+                           //       condDefaults
+                           //    )
+                           //       .then(() => {
+                           //          req.performance.measure("stale.update");
+                           //          next();
+                           //       })
+                           //       .catch((err) => {
+                           //          next(err);
+                           //       });
+                           // },
                         },
                         (err) => {
                            ////
