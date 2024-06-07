@@ -176,13 +176,15 @@ async function saveToQueue(req, jobData) {
  * @param {string} job.key triggerKey normally <objectid>.add or .update/.delete
  * @param {object} job.data data to send to the process trigger
  * @param {string} job.requestID unique request id, assigns a new uuid if not provided
+ * @param {string} job.rowLogID unique request id, assigns a new uuid if not provided
  * @returns {Promise} resolves to string "fallback" if the fallback function was used
  */
-function registerProcessTrigger(req, { key, data, requestID }) {
+function registerProcessTrigger(req, { key, data, requestID, rowLogID }) {
    const jobData = {
       key,
       data,
       requestID: requestID ?? uuid(),
+      rowLogID,
    };
    return pmTriggerCircuitBreaker.fire(req, jobData);
 }

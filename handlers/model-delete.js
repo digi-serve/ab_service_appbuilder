@@ -160,6 +160,8 @@ module.exports = {
 
                   // 2) perform the lifecycle handlers.
                   postHandlers: (done) => {
+                     const rowLogID = AB.uuid();
+
                      // These can be performed in parallel
                      async.parallel(
                         {
@@ -191,6 +193,7 @@ module.exports = {
                               req.serviceRequest(
                                  "log_manager.rowlog-create",
                                  {
+                                    uuid: rowLogID,
                                     username: condDefaults.username,
                                     usernameReal: req.usernameReal(),
                                     record: oldItem,
@@ -212,6 +215,7 @@ module.exports = {
                                  await registerProcessTrigger(req, {
                                     key: `${object.id}.deleted`,
                                     data: pureData,
+                                    rowLogID,
                                  });
                                  return;
                               } catch (err) {
