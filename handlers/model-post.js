@@ -129,6 +129,19 @@ module.exports = {
                            done(err);
                         });
                   },
+                  // we created a new entry, our current user should be registered to receive
+                  // updates on that entry
+                  broadcastRegister: (done) => {
+                     req.serviceRequest(
+                        "api.broadcast-register",
+                        {
+                           ID: [newRow.uuid],
+                        },
+                        (err) => {
+                           done(err);
+                        }
+                     );
+                  },
                   perpareBroadcast: (done) => {
                      req.performance.mark("prepare broadcast");
                      prepareBroadcast({
@@ -235,31 +248,36 @@ module.exports = {
                               await clearCache(AB, req, object.id, id);
                            },
 
-                           // Alert our Clients of changed data:
-                           // A newly created entry, might update the connected data in other
-                           // object values.  This will make sure those entries are pushed up
-                           // to the web clients.
-                           staleUpates: (next) => {
-                              const isStaleDisabled = req.param("disableStale");
-                              if (isStaleDisabled) return next();
+                           // New Strategy:
+                           // Our "created" broadcast now has a copyTo param
+                           // and we can clientside decode that for connection
+                           // updates.
+                           //
+                           // // Alert our Clients of changed data:
+                           // // A newly created entry, might update the connected data in other
+                           // // object values.  This will make sure those entries are pushed up
+                           // // to the web clients.
+                           // staleUpates: (next) => {
+                           //    const isStaleDisabled = req.param("disableStale");
+                           //    if (isStaleDisabled) return next();
 
-                              req.performance.mark("stale.update");
-                              UpdateConnectedFields(
-                                 AB,
-                                 req,
-                                 object,
-                                 null,
-                                 newRow,
-                                 condDefaults
-                              )
-                                 .then(() => {
-                                    req.performance.measure("stale.update");
-                                    next();
-                                 })
-                                 .catch((err) => {
-                                    next(err);
-                                 });
-                           },
+                           //    req.performance.mark("stale.update");
+                           //    UpdateConnectedFields(
+                           //       AB,
+                           //       req,
+                           //       object,
+                           //       null,
+                           //       newRow,
+                           //       condDefaults
+                           //    )
+                           //       .then(() => {
+                           //          req.performance.measure("stale.update");
+                           //          next();
+                           //       })
+                           //       .catch((err) => {
+                           //          next(err);
+                           //       });
+                           // },
                         },
                         (err) => {
                            ////
