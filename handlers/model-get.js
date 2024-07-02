@@ -41,7 +41,7 @@ function tryFind(object, cond, condDefaults, req) {
 
    var pCount = Promise.resolve().then(() => {
       // if no cond.limit was set, then return the length pFindAll
-      if (!cond.limit) {
+      if (!countCond.limit) {
          // return the length of pFindAll
          return pFindAll.then((results) => results.length);
       } else {
