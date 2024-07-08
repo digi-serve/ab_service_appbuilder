@@ -41,7 +41,7 @@ function tryFind(object, cond, condDefaults, req) {
 
    var pCount = Promise.resolve().then(() => {
       // if no cond.limit was set, then return the length pFindAll
-      if (!cond.limit) {
+      if (!countCond.limit) {
          // return the length of pFindAll
          return pFindAll.then((results) => results.length);
       } else {
@@ -154,15 +154,22 @@ module.exports = {
 
          req.log(`reduced where: ${JSON.stringify(cond.where)}`);
          if (cond.where?.rules?.length > 0) {
-            // attempt to clean these rules if they contain entries
-            // that are null or {}
-            cond.where = object.whereCleanUp(cond.where);
-            if (!cond.where) {
-               // however, cond.where == null is not ok, so default to
-               // an empty condition:
-               cond.where = { glue: "and", rules: [] };
+            // Sentry Error: AB-APPBUILDER-2M
+            // prevent strange error case:
+            if (
+               object.whereCleanUp &&
+               typeof object.whereCleanUp == "function"
+            ) {
+               // attempt to clean these rules if they contain entries
+               // that are null or {}
+               cond.where = object.whereCleanUp(cond.where);
+               if (!cond.where) {
+                  // however, cond.where == null is not ok, so default to
+                  // an empty condition:
+                  cond.where = { glue: "and", rules: [] };
+               }
+               req.log(`clean where: ${JSON.stringify(cond.where)}`);
             }
-            req.log(`clean where: ${JSON.stringify(cond.where)}`);
          }
 
          // 4) Perform the Find Operations
