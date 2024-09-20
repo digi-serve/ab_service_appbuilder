@@ -459,7 +459,7 @@ function updateData(AB, object, id, values, userData, req) {
    // Do Knex update data tasks
    return new Promise((resolve, reject) => {
       // retryUpdate(object, id, values, userData, req)
-      req.retry(() => object.model().update(id, values, userData))
+      req.retry(() => object.model().update(id, values, userData, null, req))
          .then((fullEntry) => {
             resolve(fullEntry);
          })
