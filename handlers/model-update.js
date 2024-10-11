@@ -283,6 +283,7 @@ module.exports = {
                                           context:
                                              "appbuilder.model-update trigger() missing data for process trigger request",
                                           params: req.params(),
+                                          id,
                                        }
                                     );
                                  }
