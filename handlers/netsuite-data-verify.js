@@ -35,9 +35,8 @@ module.exports = {
 
       let sql = `SELECT * FROM ${table};`;
       try {
-         let resultsSQL = await Netsuite.query(credentials, sql, 10, 0);
+         // let resultsSQL = await Netsuite.query(credentials, sql, 10, 0);
          let results = await Netsuite.queryAPI(credentials, table, "");
-         debugger;
          cb(null, results);
       } catch (e) {
          cb(e, null);
