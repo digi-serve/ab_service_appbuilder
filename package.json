@@ -1,6 +1,6 @@
 {
   "name": "appbuilder",
-  "version": "1.2.27+p10423.c20219",
+  "version": "1.2.28+p10424.c20220",
   "description": "(AppBuilder) A multi-tenant aware service to process our AppBuilder requests.",
   "main": "app.js",
   "author": "Johnny Hausman",
