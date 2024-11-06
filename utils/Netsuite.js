@@ -319,20 +319,25 @@ module.exports = {
          headers.q = sqlCond;
       }
 
-      let rows = [];
       let response = await fetch(credentials, URL, "GET", {}, headers);
-      console.log(response);
+
+      let rows = [];
+
+      // console.log(response);
 
       let entries = response.data.items;
       let lookups = [];
-      entries.forEach(async (e) => {
+      // CONCURRENCY_LIMIT_EXCEEDED: limit to 20
+      let maxParallel = 20;
+      for (let i = 0; i < maxParallel && i < entries.length; i++) {
+         let e = entries[i];
          let urlItem = `${credentials.NETSUITE_BASE_URL}/${table}/${e.id}`;
          lookups.push(
             fetch(credentials, urlItem, "GET", {}, headers).then((res) => {
                rows.push(res.data);
             })
          );
-      });
+      }
       await Promise.all(lookups);
 
       return rows;
