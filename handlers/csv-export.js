@@ -101,6 +101,7 @@ module.exports = {
                   obj,
                   userData,
                   extraWhere: where,
+                  hiddenFieldIds: defCSV.settings.hiddenFieldIds,
                },
                req
             ).then((SQL) => {
@@ -123,7 +124,11 @@ module.exports = {
    },
 };
 
-let getSQL = (AB, { hasHeader, dc, obj, userData, extraWhere }, req) => {
+let getSQL = (
+   AB,
+   { hasHeader, dc, obj, userData, extraWhere, hiddenFieldIds = [] },
+   req
+) => {
    let where = {
       glue: "and",
       rules: [],
@@ -196,12 +201,16 @@ let getSQL = (AB, { hasHeader, dc, obj, userData, extraWhere }, req) => {
 
             // Convert display data to CSV file
             obj.fields().forEach((f) => {
+               if (hiddenFieldIds.indexOf(f.id) > -1) return;
+
                let select;
                let columnName = f.columnName;
                if (f.alias) columnName = `${f.alias}.${columnName}`;
 
                switch (f.key) {
                   case "user":
+                     select = `IFNULL(\`${f.alias}.${f.relationName()}\`, '')`;
+                     break;
                   case "connectObject": {
                      let LinkType = `${f.settings.linkType}:${f.settings.linkViaType}`;
                      // 1:M, 1:1 (isSource = true)
@@ -301,7 +310,12 @@ let getSQL = (AB, { hasHeader, dc, obj, userData, extraWhere }, req) => {
                // SELECT "One", "Two", "Three", "Four", "Five", "Six" UNION ALL
                SQLHeader = `SELECT ${obj
                   // TODO: fix .calculate and .TextFormula fields
-                  .fields((f) => f.key != "calculate" && f.key != "TextFormula")
+                  .fields(
+                     (f) =>
+                        hiddenFieldIds.indexOf(f.id) < 0 &&
+                        f.key != "calculate" &&
+                        f.key != "TextFormula"
+                  )
                   .map((f) => `"${f.label}"`)
                   .join(",")} UNION ALL`;
             }
