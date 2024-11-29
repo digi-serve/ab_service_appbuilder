@@ -207,13 +207,17 @@ let getSQL = (
                let columnName = f.columnName;
                if (f.alias) columnName = `${f.alias}.${columnName}`;
 
-               let relationName = f.relationName();
-               if (f.alias) relationName = `${f.alias}.${relationName}`;
+               let relationName = f.relationName?.() ?? "";
+               if (f.alias && relationName)
+                  relationName = `${f.alias}.${relationName}`;
 
                switch (f.key) {
                   case "user":
-                     select = `IFNULL(\`${relationName}\`, '')`;
-                     break;
+                     if (obj instanceof AB.Class.ABObjectQuery) {
+                        select = `IFNULL(\`${relationName}\`, '')`;
+                        break;
+                     }
+                  // eslint-disable-next-line no-fallthrough
                   case "connectObject": {
                      let LinkType = `${f.settings.linkType}:${f.settings.linkViaType}`;
                      // 1:M, 1:1 (isSource = true)
