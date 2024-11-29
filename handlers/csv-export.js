@@ -207,9 +207,12 @@ let getSQL = (
                let columnName = f.columnName;
                if (f.alias) columnName = `${f.alias}.${columnName}`;
 
+               let relationName = f.relationName();
+               if (f.alias) relationName = `${f.alias}.${relationName}`;
+
                switch (f.key) {
                   case "user":
-                     select = `IFNULL(\`${f.alias}.${f.relationName()}\`, '')`;
+                     select = `IFNULL(\`${relationName}\`, '')`;
                      break;
                   case "connectObject": {
                      let LinkType = `${f.settings.linkType}:${f.settings.linkViaType}`;
