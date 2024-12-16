@@ -166,7 +166,7 @@ let getSQL = (
    //    )
    // }
 
-   let knex = obj.model().modelKnex();
+   let knex;
    let options = {
       where: where,
       sort: sort,
@@ -179,6 +179,7 @@ let getSQL = (
       query = knex.queryBuilder();
       query.from(obj.dbViewName());
    } else {
+      knex = obj.model().modelKnex();
       query = knex.query();
    }
 
