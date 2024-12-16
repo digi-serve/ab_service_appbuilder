@@ -8,7 +8,7 @@
   "dependencies": {
     "@digiserve/ab-utils": "^1.8.4",
     "async": "^3.2.0",
-    "cote": "^1.0.2",
+    "cote": "^1.2.0",
     "ejs": "^3.1.10",
     "knex": "<0.95.0",
     "lodash": "^4.17.21",
