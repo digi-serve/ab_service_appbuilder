@@ -14,7 +14,7 @@
     "lodash": "^4.17.21",
     "moment": "^2.29.1",
     "mysql": "^2.18.1",
-    "nanoid": "^5.0.7",
+    "nanoid": "^5.0.9",
     "objection": "github:Hiro-Nakamura/objection.js#fixDBErrors",
     "opossum": "^7.1.0",
     "semver": "^7.6.3",
