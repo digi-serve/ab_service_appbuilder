@@ -1,6 +1,6 @@
 {
   "name": "appbuilder",
-  "version": "1.2.55+p10447.c20408",
+  "version": "1.2.56+p10448.c20409",
   "description": "(AppBuilder) A multi-tenant aware service to process our AppBuilder requests.",
   "main": "app.js",
   "author": "Johnny Hausman",
@@ -17,7 +17,7 @@
     "nanoid": "^5.0.7",
     "objection": "github:Hiro-Nakamura/objection.js#fixDBErrors",
     "opossum": "^7.1.0",
-    "semver": "^7.6.3",
+    "semver": "^7.7.0",
     "serialize-error": "^8.0.1",
     "xml-js": "^1.6.11"
   },
