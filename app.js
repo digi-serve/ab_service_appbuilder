@@ -18,12 +18,27 @@ const {
    initProcessTriggerQueues,
 } = require("./utils/processTrigger/manager.js");
 
+const Netsuite = require("./utils/Netsuite.js");
+
 var controller = AB.controller("appbuilder");
 controller.waitForDB = true;
 controller.afterStartup((req, cb) => {
    initProcessTriggerQueues(req, AB.config())
       .then(cb)
       .catch((err) => cb(err));
+
+   // NOTE: we don't wait for this:
+   Netsuite.catalog().then((tables) => {
+      if (!tables) {
+         console.error(
+            "appbuilder.afterStartup(): ######  Netsuite.catalog() returned null"
+         );
+      } else {
+         console.log(
+            `appbuilder.afterStartup(): Netsuite.catalog(): returned ${tables.length} entries.`
+         );
+      }
+   });
 });
 // controller.beforeShutdown((cb)=>{ return cb(/* err */) });
 controller.init();

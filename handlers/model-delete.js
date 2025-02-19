@@ -40,7 +40,7 @@ module.exports = {
     */
    inputValidation: {
       objectID: { string: { uuid: true }, required: true },
-      ID: { string: { uuid: true }, required: true },
+      ID: { string: true, required: true },
    },
 
    /**
@@ -70,6 +70,8 @@ module.exports = {
 
             var id = req.param("ID");
 
+            var PK = object.PK();
+
             var oldItem = null;
             let pureData = null;
             // {valueHash}
@@ -86,13 +88,14 @@ module.exports = {
                   delete: (done) => {
                      // We are deleting an item...but first fetch its current data
                      // so we can clean up any relations on the client side after the delete
+                     let where = {};
+                     where[PK] = id;
+
                      req.performance.mark("find.old");
                      req.retry(() =>
                         object.model().find(
                            {
-                              where: {
-                                 uuid: id,
-                              },
+                              where,
                               populate: true,
                               disableMinifyRelation: true,
                            },
@@ -109,7 +112,7 @@ module.exports = {
                                  req.performance.mark("delete");
                                  // Now Delete the Item
                                  return req.retry(() =>
-                                    object.model().delete(id)
+                                    object.model().delete(id, null, req)
                                  );
                               }
                            );

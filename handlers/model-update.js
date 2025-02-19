@@ -34,7 +34,7 @@ module.exports = {
     */
    inputValidation: {
       objectID: { string: { uuid: true }, required: true },
-      ID: { string: { uuid: true }, required: true },
+      ID: { string: true, required: true }, // NOTE: Netsuite objects don't have uuid values
       values: { object: true, required: true },
       fromProcessManager: { boolean: true, optional: true },
       // uuid: { string: { uuid: true }, required: true }
@@ -257,10 +257,12 @@ module.exports = {
                            trigger: async () => {
                               if (fromProcessManager) return;
                               try {
+                                 let where = {};
+                                 where[object.PK()] = id;
                                  const pureData = (
                                     await object.model().find(
                                        {
-                                          where: { uuid: id },
+                                          where,
                                           populate: true,
                                           disableMinifyRelation: true,
                                        },
@@ -283,6 +285,7 @@ module.exports = {
                                           context:
                                              "appbuilder.model-update trigger() missing data for process trigger request",
                                           params: req.params(),
+                                          id,
                                        }
                                     );
                                  }
