@@ -54,6 +54,8 @@ module.exports = {
 
             var values = req.param("values");
 
+            var PK = object.PK();
+
             // prevent "NULL" placeholders:
             (Object.keys(values) || []).forEach((k) => {
                if (values[k] === "NULL") {
@@ -104,11 +106,8 @@ module.exports = {
                      )
                         .then((data) => {
                            cleanReturnData(AB, object, [data]).then(() => {
+                              // pull out the new row for use in our other steps
                               newRow = data;
-
-                              // So let's end the service call here, then proceed
-                              // with the rest
-                              // cb(null, data);
 
                               // proceed with the process
                               done(null, data);
@@ -132,10 +131,14 @@ module.exports = {
                   // we created a new entry, our current user should be registered to receive
                   // updates on that entry
                   broadcastRegister: (done) => {
+                     // Question: Netsuite objects don't have uuids.  lets skip this for them
+                     if (object.isNetsuite) {
+                        return done();
+                     }
                      req.serviceRequest(
                         "api.broadcast-register",
                         {
-                           ID: [newRow.uuid],
+                           ID: [newRow[PK]],
                         },
                         (err) => {
                            done(err);
@@ -204,6 +207,11 @@ module.exports = {
                            // },
                            // log the create for this new row of data
                            logger: (next) => {
+                              // API based objects don't always have a PK that is a GUID
+                              // so we can't log those currently since our row : {UUID}
+                              if (object.isAPI) {
+                                 return next();
+                              }
                               req.serviceRequest(
                                  "log_manager.rowlog-create",
                                  {
@@ -212,7 +220,7 @@ module.exports = {
                                     usernameReal: req.usernameReal(),
                                     record: newRow,
                                     level: "insert",
-                                    row: newRow.uuid,
+                                    row: newRow[PK],
                                     object: object.id,
                                  },
                                  (err) => {
@@ -222,10 +230,12 @@ module.exports = {
                            },
                            trigger: async () => {
                               try {
+                                 let where = {};
+                                 where[PK] = newRow[PK];
                                  const pureData = (
                                     await object.model().find(
                                        {
-                                          where: { uuid: newRow.uuid },
+                                          where,
                                           populate: true,
                                           disableMinifyRelation: true,
                                        },

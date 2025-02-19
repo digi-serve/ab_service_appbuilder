@@ -175,7 +175,8 @@ async function saveToQueue(req, jobData) {
  * @param {object} job data to send with the service request
  * @param {string} job.key triggerKey normally <objectid>.add or .update/.delete
  * @param {object} job.data data to send to the process trigger
- * @param {string} job.requestID unique request id, assigns a new uuid if not provided
+ * @param {string} job.requestID unique prevents duplicate processing in trigger task
+ *                 in the case of a timeout, which attempts to resend the data.
  * @param {string} job.rowLogID unique request id, assigns a new uuid if not provided
  * @returns {Promise} resolves to string "fallback" if the fallback function was used
  */
