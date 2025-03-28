@@ -206,6 +206,17 @@ module.exports = {
             });
          }
 
+         // let preCSVPackBytes = JSON.stringify(result).length;
+         // csv pack our results
+         result = object.model().csvPack(result);
+         // let postCSVPackBytes = JSON.stringify(result).length;
+         // req.log(
+         //    `CSV Pack: ${preCSVPackBytes} -> ${postCSVPackBytes} (${(
+         //       (postCSVPackBytes / preCSVPackBytes) *
+         //       100
+         //    ).toFixed(2)}%)`
+         // );
+
          cb(null, result);
       } catch (err) {
          req.notify.developer(err, {
