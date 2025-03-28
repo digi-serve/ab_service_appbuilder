@@ -130,6 +130,20 @@ module.exports = {
          };
 
          req.log(JSON.stringify(cond));
+         // temporary patch for preventing invalid ID:['1,2,3...'] conditions.
+         // This should get Netsuite running until we isolate the real problem.
+         if (object.isNetsuite) {
+            if (
+               cond.where?.id?.length == 1 &&
+               typeof cond.where.id[0] == "string"
+            ) {
+               let newList = cond.where.id[0].split(",").map((id) => id.trim());
+               if (newList.length > 1) {
+                  cond.where.id = newList;
+                  req.log(`NetsuitePatch: ${JSON.stringify(cond)}`);
+               }
+            }
+         }
          req.log(JSON.stringify(condDefaults));
 
          // 1) make sure any incoming cond.where values are in our QB
