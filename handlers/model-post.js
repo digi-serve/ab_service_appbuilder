@@ -6,7 +6,7 @@ const async = require("async");
 const ABBootstrap = require("../AppBuilder/ABBootstrap");
 const cleanReturnData = require("../AppBuilder/utils/cleanReturnData");
 const Errors = require("../utils/Errors");
-const UpdateConnectedFields = require("../utils/broadcastUpdateConnectedFields.js");
+// const UpdateConnectedFields = require("../utils/broadcastUpdateConnectedFields.js");
 const { prepareBroadcast } = require("../utils/broadcast.js");
 const {
    registerProcessTrigger,
@@ -66,6 +66,7 @@ module.exports = {
             var condDefaults = req.userDefaults();
 
             var newRow = null;
+            var newRowPacked = null;
             const packets = [];
             async.series(
                {
@@ -108,6 +109,7 @@ module.exports = {
                            cleanReturnData(AB, object, [data]).then(() => {
                               // pull out the new row for use in our other steps
                               newRow = data;
+                              newRowPacked = object.model().csvPack({ data });
 
                               // proceed with the process
                               done(null, data);
@@ -152,6 +154,8 @@ module.exports = {
                         req,
                         object,
                         data: newRow,
+                        dataPacked: newRowPacked,
+                        dataId: newRow[PK],
                         event: "ab.datacollection.create",
                      })
                         .then((packet) => {
@@ -174,7 +178,7 @@ module.exports = {
                   serviceResponse: (done) => {
                      // So let's end the service call here, then proceed
                      // with the rest
-                     cb(null, newRow);
+                     cb(null, newRowPacked);
                      done();
                   },
 

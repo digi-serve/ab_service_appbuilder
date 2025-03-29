@@ -274,9 +274,10 @@ let getSQL = (
                   case "string":
                   case "LongText":
                      if (f.isMultilingual) {
-                        let transCol = (obj instanceof AB.Class.ABObjectQuery
-                           ? "`{prefix}.translations`"
-                           : "{prefix}.translations"
+                        let transCol = (
+                           obj instanceof AB.Class.ABObjectQuery
+                              ? "`{prefix}.translations`"
+                              : "{prefix}.translations"
                         ).replace("{prefix}", f.dbPrefix().replace(/`/g, ""));
 
                         let languageCode =
