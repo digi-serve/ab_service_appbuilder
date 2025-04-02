@@ -10,7 +10,7 @@ const Errors = require("../utils/Errors");
 const {
    registerProcessTrigger,
 } = require("../utils/processTrigger/manager.js");
-const UpdateConnectedFields = require("../utils/broadcastUpdateConnectedFields.js");
+// const UpdateConnectedFields = require("../utils/broadcastUpdateConnectedFields.js");
 const { prepareBroadcast } = require("../utils/broadcast.js");
 const { clearCache } = require("../utils/cacheManager.js");
 
@@ -120,8 +120,6 @@ module.exports = {
                         .then((num) => {
                            numRows = num;
                            req.performance.measure("delete");
-                           // End the API call here:
-                           // cb(null, { numRows });
                            done();
                         })
                         .catch((err) => {

@@ -7,7 +7,7 @@ const async = require("async");
 const ABBootstrap = require("../AppBuilder/ABBootstrap");
 const cleanReturnData = require("../AppBuilder/utils/cleanReturnData");
 const Errors = require("../utils/Errors");
-const RetryFind = require("../utils/RetryFind");
+// const RetryFind = require("../utils/RetryFind");
 // const UpdateConnectedFields = require("../utils/broadcastUpdateConnectedFields.js");
 const { prepareBroadcast } = require("../utils/broadcast.js");
 const {
@@ -80,6 +80,7 @@ module.exports = {
 
             // var oldItem = null;
             var newRow = null;
+            var newRowPacked = null;
             const packets = [];
             async.series(
                {
@@ -165,8 +166,9 @@ module.exports = {
                            req.performance.measure("update");
                            cleanReturnData(AB, object, [result]).then(() => {
                               newRow = result;
-                              // end the api call here
-                              // cb(null, result);
+                              newRowPacked = object
+                                 .model()
+                                 .csvPack({ data: result });
 
                               // proceed with the process
                               done(null, result);
@@ -185,6 +187,8 @@ module.exports = {
                         req,
                         object,
                         data: newRow,
+                        dataPacked: newRowPacked,
+                        dataId: id,
                         event: "ab.datacollection.update",
                      })
                         .then((packet) => {
@@ -206,7 +210,7 @@ module.exports = {
                   serviceResponse: (done) => {
                      // So let's end the service call here, then proceed
                      // with the rest
-                     cb(null, newRow);
+                     cb(null, newRowPacked);
                      done();
                   },
 
