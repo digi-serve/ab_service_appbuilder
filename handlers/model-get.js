@@ -129,6 +129,10 @@ module.exports = {
             username: req.username(),
          };
 
+         // NOTE: cond is expected to have a jobID set now
+         // so let's set it to our req.jobID
+         cond.jobID = cond.jobID ?? req.jobID;
+
          req.log(JSON.stringify(cond));
          // temporary patch for preventing invalid ID:['1,2,3...'] conditions.
          // This should get Netsuite running until we isolate the real problem.
