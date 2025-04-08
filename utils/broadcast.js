@@ -1,6 +1,13 @@
-const getRightRoles = require("./getRightRoles.js");
+// const getRightRoles = require("./getRightRoles.js");
 
-async function prepareBroadcast({ AB, req, object, data, dataId, event }) {
+async function prepareBroadcast({
+   /*AB,*/ req,
+   object,
+   data,
+   dataPacked,
+   dataId,
+   event,
+}) {
    const rooms = [];
    /*
     * DEPRECIATED Approach: {object}-{role} method
@@ -18,10 +25,13 @@ async function prepareBroadcast({ AB, req, object, data, dataId, event }) {
    */
 
    // now we create rooms {tenantID}-{id}
-   // NOTE: we EITHER have dataId OR data, so check each one for our id
+
    let id = dataId;
-   if (data) {
-      id = data[object.PK()];
+   if (!id) {
+      // try to pull from an existing data entry
+      if (data && data[object.PK()]) {
+         id = data[object.PK()];
+      }
    }
    rooms.push(req.socketKey(id)); // req.socketKey() adds {tenantID}-
 
@@ -52,7 +62,7 @@ async function prepareBroadcast({ AB, req, object, data, dataId, event }) {
       event,
       data: {
          objectId: object.id,
-         data: data ?? dataId,
+         data: dataPacked ?? data ?? dataId,
          jobID: req.jobID ?? "??",
       },
       copyTo,
