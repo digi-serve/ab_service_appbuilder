@@ -33,7 +33,7 @@ module.exports = {
       let table = req.param("table");
       let credentials = Netsuite.importCredentials(req);
 
-      let sql = `SELECT * FROM ${table};`;
+      // let sql = `SELECT * FROM ${table};`;
       try {
          // let resultsSQL = await Netsuite.query(credentials, sql, 10, 0);
          let results = await Netsuite.queryAPI(credentials, table, "");

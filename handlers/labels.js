@@ -11,7 +11,7 @@ var Labels = require("../AppBuilder/core/labels/labels");
 // and returns those when requested.
 
 function getLabels(req, langCode) {
-   return new Promise((resolve, reject) => {
+   return new Promise((resolve /*, reject */) => {
       if (!Labels[langCode]) {
          var error = new Error(
             `No label definitions for language_code=[${langCode}]`
