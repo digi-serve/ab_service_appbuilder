@@ -8,7 +8,7 @@ const ABBootstrap = require("../AppBuilder/ABBootstrap");
 const cleanReturnData = require("../AppBuilder/utils/cleanReturnData");
 const Errors = require("../utils/Errors");
 
-const { fork } = require("child_process");
+const { Worker } = require("worker_threads");
 const path = require("path");
 
 /**
@@ -233,9 +233,10 @@ module.exports = {
 
          // if we are handling alot of data, let's fork a worker
          // to do the CSV packing for us.
-         if (result.data?.length > 1000) {
+         if (result.data?.length > 1) {
             // This is large enought to justify a worker
-            req.log(`${result.data.length} rows => FORK: csvPack()`);
+            req.log(`${result.data.length} rows => WORKER: csvPack()`);
+
             try {
                let keys = ["list", "json"];
                let Operation = {
@@ -255,57 +256,7 @@ module.exports = {
                   }),
                };
 
-               const pathCSVPack = path.join(
-                  __dirname,
-                  "..",
-                  "utils",
-                  "csvPack.js"
-               );
-               const child = fork(
-                  pathCSVPack /*, [], {
-                  execArgv: [`--inspect-brk=9229`],
-               }*/
-               );
-               await new Promise((resolve, reject) => {
-                  let isResolved = false;
-                  child.on("message", (packedData) => {
-                     // {object} packedData
-                     // {
-                     //    data: "csv data",
-                     //    relations: {
-                     //       {connectionID}: "csv data", // each entry has entry._csvID, that is the lookup
-                     //       {connectionID}: "csv data",
-                     //       ...
-                     //    }
-                     //    total_bytes:xx,
-                     // }
-                     result = packedData;
-                     isResolved = true;
-                     resolve();
-                  });
-                  child.on("error", (err) => {
-                     if (!isResolved) {
-                        req.log(" worker: csvPack() ERROR");
-                        req.log(err);
-                        isResolved = true;
-                        reject(err);
-                     }
-                  });
-                  child.on("exit", (code) => {
-                     if (!isResolved) {
-                        if (code !== 0) {
-                           req.log(" worker: csvPack() ERROR");
-                           req.log(`Worker stopped with exit code ${code}`);
-                        }
-                        isResolved = true;
-                        reject(
-                           new Error("Worker stopped with exit code " + code)
-                        );
-                     }
-                  });
-                  child.send(Operation);
-               });
-               child.kill();
+               result = await csvPackWorker(Operation);
             } catch (e) {
                req.log(" worker: csvPack() ERROR");
                req.log(e);
@@ -334,3 +285,32 @@ module.exports = {
       }
    },
 };
+
+// Function to run a worker thread
+function csvPackWorker(dataset) {
+   return new Promise((resolve, reject) => {
+      const worker = new Worker(
+         path.join(__dirname, "..", "utils", "csvPack.js"),
+         {
+            workerData: dataset, // Pass the dataset to the worker
+         }
+      );
+
+      // Listen for messages from the worker
+      worker.on("message", (result) => {
+         resolve(result); // Resolve the promise with the result
+      });
+
+      // Handle errors in the worker
+      worker.on("error", (err) => {
+         reject(err); // Reject the promise with the error
+      });
+
+      // Handle worker exit
+      worker.on("exit", (code) => {
+         if (code !== 0) {
+            reject(new Error(`Worker stopped with exit code ${code}`));
+         }
+      });
+   });
+}

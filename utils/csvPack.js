@@ -1,7 +1,12 @@
+const { parentPort, workerData } = require("worker_threads");
+
+// The dataset is passed as `workerData`
+const Operation = workerData;
+
 const _ = require("lodash");
 const Papa = require("papaparse");
 const prettyTime = require("pretty-time");
-let jobID = null;
+let jobID = Operation.jobID;
 
 function log(message) {
    console.log(`${jobID}:: ${message}`);
@@ -11,11 +16,10 @@ function error(message) {
    console.error(`${jobID}:: ${message}`);
 }
 
-process.on("message", function (Operation) {
-   jobID = Operation.jobID;
+try {
    let transferTime = process.hrtime(Operation.startTime);
 
-   log(`SPAWN csvPack: TransferTime: ${prettyTime(transferTime)}`);
+   log(`WORKER csvPack: TransferTime: ${prettyTime(transferTime)}`);
 
    // Setup
    let data = Operation.data;
@@ -168,23 +172,9 @@ process.on("message", function (Operation) {
       }
    });
    newData.csv_packed = packedData;
-   process.send(newData);
-});
-
-// Handle uncaught exceptions
-process.on("uncaughtException", (err) => {
-   error(`Uncaught Exception: ${err.message}`);
-   process.send({ error: `Uncaught Exception: ${err.message}` });
-   process.exit(1); // Exit the child process with an error code
-});
-
-// Handle unhandled promise rejections
-process.on("unhandledRejection", (reason) => {
-   process.send({ error: `Unhandled Rejection: ${reason}` });
-   process.exit(1); // Exit the child process with an error code
-});
-
-process.on("SIGTERM", () => {
-   log("Child process received SIGTERM, shutting down...");
-   process.exit(0); // Exit gracefully
-});
+   parentPort.postMessage(newData);
+} catch (err) {
+   // Send an error back to the parent thread
+   error("WORKER: error: " + err.toString());
+   parentPort.postMessage({ error: err.message });
+}
