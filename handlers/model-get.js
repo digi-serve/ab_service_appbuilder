@@ -8,6 +8,9 @@ const ABBootstrap = require("../AppBuilder/ABBootstrap");
 const cleanReturnData = require("../AppBuilder/utils/cleanReturnData");
 const Errors = require("../utils/Errors");
 
+const { fork } = require("child_process");
+const path = require("path");
+
 /**
  * tryFind()
  * we wrap our actual find actions in this tryFind() routine.  Mostly so that
@@ -226,7 +229,94 @@ module.exports = {
 
          // let preCSVPackBytes = JSON.stringify(result).length;
          // csv pack our results
-         result = object.model().csvPack(result);
+         req.performance?.mark("CSV Pack");
+
+         // if we are handling alot of data, let's fork a worker
+         // to do the CSV packing for us.
+         if (result.data?.length > 1000) {
+            // This is large enought to justify a worker
+            req.log(`${result.data.length} rows => FORK: csvPack()`);
+            try {
+               let keys = ["list", "json"];
+               let Operation = {
+                  jobID: req.jobID,
+                  startTime: process.hrtime(),
+                  data: result,
+                  stringifyFields: object
+                     .fields((f) => keys.indexOf(f.key) > -1)
+                     .map((f) => f.columnName),
+                  connections: object.connectFields().map(function (f) {
+                     return {
+                        id: f.id,
+                        relationName: f.relationName(),
+                        columnName: f.columnName,
+                        connPK: f.datasourceLink.PK(),
+                     };
+                  }),
+               };
+
+               const pathCSVPack = path.join(
+                  __dirname,
+                  "..",
+                  "utils",
+                  "csvPack.js"
+               );
+               const child = fork(
+                  pathCSVPack /*, [], {
+                  execArgv: [`--inspect-brk=9229`],
+               }*/
+               );
+               await new Promise((resolve, reject) => {
+                  let isResolved = false;
+                  child.on("message", (packedData) => {
+                     // {object} packedData
+                     // {
+                     //    data: "csv data",
+                     //    relations: {
+                     //       {connectionID}: "csv data", // each entry has entry._csvID, that is the lookup
+                     //       {connectionID}: "csv data",
+                     //       ...
+                     //    }
+                     //    total_bytes:xx,
+                     // }
+                     result = packedData;
+                     isResolved = true;
+                     resolve();
+                  });
+                  child.on("error", (err) => {
+                     if (!isResolved) {
+                        req.log(" worker: csvPack() ERROR");
+                        req.log(err);
+                        isResolved = true;
+                        reject(err);
+                     }
+                  });
+                  child.on("exit", (code) => {
+                     if (!isResolved) {
+                        if (code !== 0) {
+                           req.log(" worker: csvPack() ERROR");
+                           req.log(`Worker stopped with exit code ${code}`);
+                        }
+                        isResolved = true;
+                        reject(
+                           new Error("Worker stopped with exit code " + code)
+                        );
+                     }
+                  });
+                  child.send(Operation);
+               });
+               child.kill();
+            } catch (e) {
+               req.log(" worker: csvPack() ERROR");
+               req.log(e);
+               req.log(" falling back to object.model().csvPack()");
+               result = object.model().csvPack(result);
+            }
+         } else {
+            result = object.model().csvPack(result);
+         }
+         req.performance?.measure("CSV Pack");
+
          // let postCSVPackBytes = JSON.stringify(result).length;
          // req.log(
          //    `CSV Pack: ${preCSVPackBytes} -> ${postCSVPackBytes} (${(
