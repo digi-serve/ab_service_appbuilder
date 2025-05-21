@@ -253,7 +253,10 @@ module.exports = {
 
          // if we are handling alot of data, let's fork a worker
          // to do the CSV packing for us.
-         if (result.data?.length > 1000) {
+         // NOTE: 10000 is the size of a single batch in csvPackBatch.js
+         //       so we can use that as a threshold for when to
+         //       fork a worker thread to do the CSV packing.
+         if (result.data?.length > 10000) {
             // This is large enought to justify using our csvPackBatch utility
             req.log(`${result.data.length} rows => WORKER: csvPack()`);
 
