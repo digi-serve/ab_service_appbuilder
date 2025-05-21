@@ -8,8 +8,11 @@ const ABBootstrap = require("../AppBuilder/ABBootstrap");
 const cleanReturnData = require("../AppBuilder/utils/cleanReturnData");
 const Errors = require("../utils/Errors");
 
-const { Worker } = require("worker_threads");
-const path = require("path");
+const CSVPackBatch = require("../utils/csvPackBatch");
+
+// const { Worker } = require("worker_threads");
+// const msgpack = require("msgpack-lite");
+// const path = require("path");
 
 /**
  * tryFind()
@@ -227,21 +230,47 @@ module.exports = {
             });
          }
 
+         // // For testing Large Data sets ...
+         // // Use a DataCollection or Grid that is viewing these
+         // // objects:
+         // // we will make sure there are 400,000 rows in the result
+         // // to test our csvPacking of large datasets.
+         // if (
+         //    [
+         //       "f241851d-9435-4edd-8476-96001ab15357",
+         //       // "c1a3642d-3863-4eb7-ac98-3dd18de3e683",
+         //       "721797cd-9dd9-4b1a-955d-70f1b79756b5",
+         //    ].indexOf(object.id) > -1
+         // ) {
+         //    if (result.data?.length > 0) {
+         //       await copyTo(AB, result.data, 400000);
+         //    }
+         // }
+
          // let preCSVPackBytes = JSON.stringify(result).length;
          // csv pack our results
          req.performance?.mark("CSV Pack");
 
          // if we are handling alot of data, let's fork a worker
          // to do the CSV packing for us.
-         if (result.data?.length > 1) {
-            // This is large enought to justify a worker
+         if (result.data?.length > 1000) {
+            // This is large enought to justify using our csvPackBatch utility
             req.log(`${result.data.length} rows => WORKER: csvPack()`);
 
             try {
+               // most of our attempts to use worker threads need to
+               // have simple functions to process the data.  So we can't
+               // access external Objects and call their functions in the fn()
+               // passed to the worker. So in our optimizations we need to pre
+               // parse the data our object.model().csvPack() would lookup
+               // inernally to perform it's job.
+
+               // Our Operation object is the simplified dataset for a
+               // simplified worker function.
                let keys = ["list", "json"];
                let Operation = {
                   jobID: req.jobID,
-                  startTime: process.hrtime(),
+                  // startTime: process.hrtime(),
                   data: result,
                   stringifyFields: object
                      .fields((f) => keys.indexOf(f.key) > -1)
@@ -256,7 +285,27 @@ module.exports = {
                   }),
                };
 
-               result = await csvPackWorker(Operation);
+               /*
+               // Testing code for experimenting on using Worker Threads
+               // and other methods to offload the processing.
+
+               // // using msgpack to serialize the data and send that to our
+               // // worker thread.
+               // // Serialize the JSON data into a binary format
+               // const binaryData = msgpack.encode(Operation);
+
+               // // Create a SharedArrayBuffer and copy the binary data into it
+               // const sharedBuffer = new SharedArrayBuffer(binaryData.length);
+               // const sharedArray = new Uint8Array(sharedBuffer);
+               // sharedArray.set(binaryData);
+
+               // // csvPackWorker is ../utils/csvPack.js 
+               // result = await csvPackWorker(sharedBuffer);
+               */
+
+               // Currently prefering to use the csvPackBatch.js
+               // utility to do the CSV packing.
+               result = await CSVPackBatch(Operation);
             } catch (e) {
                req.log(" worker: csvPack() ERROR");
                req.log(e);
@@ -264,6 +313,12 @@ module.exports = {
                result = object.model().csvPack(result);
             }
          } else {
+            // if we don't have that many rows, lets just use the
+            // object.model().csvPack() method.
+            // it is faster than, our csvPackBatch.js method, but
+            // doesn't give up the cpu for large datasets and multiple
+            // parallel requests with large datasets can lock up the
+            // Event Loop.
             result = object.model().csvPack(result);
          }
          req.performance?.measure("CSV Pack");
@@ -286,6 +341,32 @@ module.exports = {
    },
 };
 
+/*
+function copyTo(AB, data, length) {
+   return new Promise((resolve, reject) => {
+      let row;
+      let i = 0;
+      while (data.length < length) {
+         row = data[data.length - 1];
+         data.push(AB.cloneDeep(row));
+         i++;
+         if (i > 1000) {
+            break;
+         }
+      }
+
+      if (data.length >= length) {
+         resolve();
+      } else {
+         setImmediate(() => {
+            copyTo(AB, data, length).then(resolve).catch(reject);
+         });
+      }
+   });
+}
+*/
+
+/*
 // Function to run a worker thread
 function csvPackWorker(dataset) {
    return new Promise((resolve, reject) => {
@@ -314,3 +395,4 @@ function csvPackWorker(dataset) {
       });
    });
 }
+*/

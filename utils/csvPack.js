@@ -1,6 +1,27 @@
+/**
+ * DEPRECIATED
+ * This is a sample test of using a worker thread to process a large
+ * json data set and convert it to CSV.
+ *
+ * We are using the csvPackBatch.js utility to do this instead as it
+ * consistently gave us better performance. And doesn't have the overhead
+ * of copying the large dataset to the worker thread.
+ *
+ * I'm leaving this here for reference and to show how to use a worker
+ * thread to process a large dataset.
+ *
+ */
+
 const { parentPort, workerData } = require("worker_threads");
+// const msgpack = require("msgpack-lite");
 
 // The dataset is passed as `workerData`
+// Access the SharedArrayBuffer
+// const sharedArray = new Uint8Array(workerData);
+
+// // Decode the binary data back into JSON
+// const Operation = msgpack.decode(sharedArray);
+
 const Operation = workerData;
 
 const _ = require("lodash");
