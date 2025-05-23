@@ -252,7 +252,9 @@ let getSQL = (
                      break;
                   }
                   case "formula":
-                     select = obj.convertFormulaField(f);
+                     if (obj instanceof AB.Class.ABObjectQuery)
+                        select = `IFNULL(\`${columnName}\`, '')`;
+                     else select = obj.convertFormulaField(f);
                      break;
                   case "calculate":
                   case "TextFormula":
